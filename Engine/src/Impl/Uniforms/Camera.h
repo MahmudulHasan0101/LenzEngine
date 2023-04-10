@@ -44,8 +44,8 @@ namespace lenz
 		void OnUpdate(TimeStep& ts);
 
 		void UploadTo(std::initializer_list<Shader*> shaders);
-		void UpdoadOrientationMatrixTo(std::initializer_list<Shader*> shader);
-		void UpdoadPositionMatrixTo(std::initializer_list<Shader*> shader);
+		void UploadOrientationMatrixTo(std::initializer_list<Shader*> shader);
+		void UploadPositionMatrixTo(std::initializer_list<Shader*> shader);
 
 		Camera();
 		void Init(const char* name, glm::vec3 position = glm::vec3{ 0.0f, 0.0f, 0.0f }, float FOVdeg = 60.0f, float nearPlane = 0.01f, float farPlane = 100.0f);

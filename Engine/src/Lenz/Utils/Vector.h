@@ -3,94 +3,6 @@
 
 namespace lenz
 {
-
-	/***
-	* Pushable data buffer that can hold various size of data and is resizable | a binder of VoidArray
-	* 	
-	***/
-
-	class VoidVector
-	{
-	public: 
-		VoidVector();
-		VoidVector(uint32_t typesize, uint32_t startupSize = 16);
-		~VoidVector();
-
-		void Init(uint32_t typesize, uint32_t startupSize);
-		void Delete();
-
-		template<typename T, typename ...Args>
-		T& PushObj(Args&&...args)
-		{
-			if (m_stride >= m_size - sizeof(T))
-			{
-				if (m_memory == nullptr)
-				{
-					Init(sizeof(T), 8);
-				}
-				else
-					Resize();
-			}
-
-			uint32_t index = m_stride / sizeof(char);
-			memcpy(&m_memory[index], &T(std::forward<Args>(args)...), m_typesize);
-			m_stride += m_typesize;
-
-			return Get<T>(index);
-		}
-
-		template<typename T>
-		T& ReplaceObj(uint32_t index, T& data)
-		{
-			memcpy(&m_memory[(index * m_typesize) / sizeof(char)], *data, m_typesize);
-			return m_memory[index];
-		}
-
-		void Push(void* data);
-		void Pop();
-		void Replace(uint32_t index, void* data);
-		void Replace(uint32_t index1, uint32_t index2);
-
-		template<typename T>
-		void Print() 
-		{
-			uint32_t newstride = m_stride / sizeof(T);
-			T* data = (T*)m_memory;
-
-			for (uint32_t u = 0; u < newstride-1; u++)
-			{
-				std::cout << (data[u]) << ", ";
-			}
-
-			std::cout << (data[newstride]) << "\n";
-		}
-
-		inline uint32_t TypeSize() const { return m_typesize; }
-		inline uint32_t Size() const { return m_stride/m_typesize; }
-		inline uint32_t MemorySize() const { return m_size; }
-		inline uint32_t Stride() const { return m_stride; }
-
-		inline void* operator [] (uint32_t index) { return &m_memory[(index * m_typesize) / sizeof(char)]; }
-
-		template<typename T>
-		inline T& Get(uint32_t index) { return *(T*)&m_memory[(index * m_typesize) / sizeof(char)]; }
-		inline void* Last() { return &m_memory[(m_stride - m_typesize) / sizeof(char)]; }
-		inline void* First() { return &m_memory[0]; }
-		inline void* Data() { return m_memory; }
-
-	private:
-		void Resize(float ratio = 2);
-
-		uint32_t m_stride;
-		uint32_t m_size;
-		uint32_t m_typesize;
-
-		char* m_memory;
-	};
-
-
-
-
 	/***
 	*
 	* | class1 | class2 | class1 | class3 ....
@@ -120,6 +32,8 @@ namespace lenz
 		void Clear();
 		void Write(uint32_t offset, void* data, uint32_t size);
 		void Push(void* data, uint32_t size);
+		void SetSize(size_t size);
+		void GrowTo(size_t size);
 
 		template<typename T, typename...Args>
 		T& Push(Args&&...args)
@@ -135,7 +49,6 @@ namespace lenz
 
 		void Map(char* data, uint32_t size, uint32_t offset, uint32_t elementSize, uint32_t blockSize);
 
-		void Grow(float ratio = 2, uint32_t growthreshold = 16);
 		void ShrinkToFit();
 
 
@@ -150,13 +63,13 @@ namespace lenz
 		}
 
 		template<typename T = void>
-		uint32_t Size()
+		size_t GetSize()
 		{
 			return m_size / sizeof(T);
 		}
 
 		template<>
-		uint32_t Size<void>()
+		size_t GetSize<void>()
 		{
 			return m_size;
 		}
@@ -170,10 +83,10 @@ namespace lenz
 				return;
 			}
 
-			uint32_t newstride = m_stride / sizeof(T);
+			size_t newstride = m_stride / sizeof(T);
 			T* data = (T*)m_memory;
 
-			for (uint32_t u = 0; u < newstride - 1; u++)
+			for (size_t u = 0; u < newstride - 1; u++)
 			{
 				std::cout << (data[u]) << ", ";
 			}
@@ -181,12 +94,22 @@ namespace lenz
 			std::cout << (data[newstride-1]) << "\n";
 		}
 
+		void SetStride(size_t offset)
+		{
+			m_stride = offset;
+		}
+
+		void SetGrowthBias(float bias)
+		{
+			m_growthBias = bias;
+		}
+
 		//inline uint32_t Size() const { return m_size; }
-		inline uint32_t Stride() const { return m_stride; }
+		inline size_t GetStride() const { return m_stride; }
 
 		template<typename T>
-		inline T& Get(uint32_t index) { return *(T*)&m_memory[(index * sizeof(T) / sizeof(char))]; }
-		inline void* Get(uint32_t index, uint32_t classSize) { return &m_memory[(index * classSize) / sizeof(char)]; }
+		inline T& Get(size_t index) { return *(T*)&m_memory[(index * sizeof(T) / sizeof(char))]; }
+		inline void* Get(size_t index, size_t classSize) { return &m_memory[(index * classSize) / sizeof(char)]; }
 
 		template<typename T = void>
 		inline T* Back() { return (T*)(void*)m_memory[(m_stride-sizeof(T)) /sizeof(char)]; }
@@ -201,7 +124,7 @@ namespace lenz
 
 		template<typename T>
 		void operator = (std::initializer_list<T> arr) {
-			uint32_t arrstride = arr.size() * sizeof(T);
+			size_t arrstride = arr.size() * sizeof(T);
 			if (arrstride != m_size)
 			{
 				if (m_memory == nullptr)
@@ -228,10 +151,12 @@ namespace lenz
 
 		inline void* operator [] (uint32_t index) { return &m_memory[index / (sizeof(char))]; }
 
-		inline void* Data() { return m_memory; }
+		inline void* GetData() { return m_memory; }
 	protected:
 		char* m_memory;
-		uint32_t m_size, m_stride;
+		size_t m_size, m_stride;
+		float m_growthBias = 1.5f;
+
 	};
 
 
@@ -325,7 +250,8 @@ namespace lenz
 	public:
 		BlockArray(uint32_t allocationSize)
 		{
-			Init(allocationSize);
+			if (allocationSize)
+				Init(allocationSize);
 		}
 
 		BlockArray(std::initializer_list<uint32_t> arr)
@@ -377,8 +303,8 @@ namespace lenz
 			LZ_CORE_ASSERT((m_blocks.find(classUUID) != m_blocks.end()), "This block does not exists");
 
 			uint32_t offset = (m_slideStride * slideNo) + m_blocks[classUUID];
-			if (m_voidarray.Size<void>() < offset + size)
-				m_voidarray.Grow(2.5f);
+			//if (m_voidarray.Size<void>() < offset + size)
+			//	m_voidarray.Grow(2.5f);
 
 			m_voidarray.Write(offset, data, size);
 		}
@@ -506,7 +432,7 @@ namespace lenz
 		void* Back() { return m_Array.Back(); }
 		void* Front() { return m_Array.Front(); }
 
-		void* Data() { return m_Array.Data(); }
+		void* Data() { return m_Array.GetData(); }
 
 	private:
 		VoidArray m_Array;

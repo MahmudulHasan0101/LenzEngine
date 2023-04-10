@@ -2,91 +2,6 @@
 
 namespace lenz
 {
-	VoidVector::VoidVector()
-		: m_typesize(0), m_size(0), m_stride(0)
-	{
-	}
-
-	VoidVector::VoidVector(uint32_t typesize, uint32_t startupSize)
-		: m_typesize(typesize), m_size(0), m_stride(0)
-	{
-		Init(typesize, startupSize);
-	}
-
-	VoidVector::~VoidVector()
-	{
-		Delete();
-	}
-
-	void VoidVector::Init(uint32_t typesize, uint32_t startupSize)
-	{
-		m_typesize = typesize;
-		m_size = m_typesize * startupSize;
-		m_memory = (char*)malloc(m_size);
-	}
-
-	void VoidVector::Delete()
-	{
-		free(m_memory);
-	}
-
-	void VoidVector::Push(void* data)
-	{
-		LZ_CORE_ASSERT((m_memory != nullptr), "This class is not intellized!");
-
-		memcpy(&m_memory[m_stride / sizeof(char)], data, m_typesize);
-		m_stride += m_typesize;
-
-		if (m_stride >= m_size)
-			Resize();
-	}
-
-	void VoidVector::Pop()
-	{
-		LZ_CORE_ASSERT(m_stride <= 0, "this vector is already empty!");
-
-		memcpy(&m_memory[(m_stride-m_typesize) / sizeof(char)], nullptr, m_typesize);
-		m_stride -= m_typesize;
-	}
-
-	void VoidVector::Replace(uint32_t index, void* data)
-	{
-		LZ_CORE_ASSERT(index > m_stride / m_typesize, "element doesn't exists!");
-
-		memcpy(&m_memory[(index * m_typesize) / sizeof(char)], data, m_typesize);
-	}
-
-	void VoidVector::Replace(uint32_t index1, uint32_t index2)
-	{
-		uint32_t oneIndex = (index1 * m_typesize) / sizeof(char);
-		uint32_t twoIndex = (index2 * m_typesize) / sizeof(char);
-
-		LZ_CORE_ASSERT(oneIndex > m_stride / sizeof(char), "element does't exists!");
-		LZ_CORE_ASSERT(twoIndex > m_stride / sizeof(char), "element does't exists!");
-
-		void* one = &m_memory[oneIndex];
-		void* tow = &m_memory[twoIndex];
-
-		memcpy(one, tow, m_typesize);
-		memcpy(tow, nullptr, m_typesize);
-	}
-
-	void VoidVector::Resize(float ratio)
-	{
-		void* newMemory = malloc(m_size * ratio);
-		memcpy(newMemory, m_memory, m_size);
-		delete(m_memory);
-		m_memory = (char*)newMemory;
-		m_size *= 2;
-	}
-
-
-
-
-
-
-
-
 	VoidArray::VoidArray()
 		: m_size(0), m_stride(0)
 	{
@@ -149,7 +64,7 @@ namespace lenz
 
 	void VoidArray::Remove(uint32_t offset, uint32_t size)
 	{
-		memcpy(&m_memory[offset / sizeof(char)], nullptr, size);
+		memset(&m_memory[offset / sizeof(char)], 0, size);
 		m_stride -= size;
 	}
 
@@ -189,18 +104,26 @@ namespace lenz
 		m_stride += size * elementSize;
 	}
 
-	void VoidArray::Grow(float ratio, uint32_t growthreshold)
+	void VoidArray::SetSize(size_t size)
 	{
-		void* newmem = malloc((m_size + growthreshold) * ratio);
+		m_size = size;
+		void* newmem = malloc(m_size);
 		memcpy(newmem, m_memory, m_stride);
 		delete(m_memory);
 		m_memory = (char*)newmem;
 	}
 
+	void VoidArray::GrowTo(size_t size)
+	{
+		if (size > m_size)
+			SetSize(size);
+	}
+
 	void VoidArray::ShrinkToFit()
 	{
-		Grow(m_stride / m_size);
+		SetSize(m_stride);
 	}
+
 
 
 

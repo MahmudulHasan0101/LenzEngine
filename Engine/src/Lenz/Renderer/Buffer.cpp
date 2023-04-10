@@ -64,17 +64,16 @@ namespace lenz
 		glBindBuffer(GetType(), 0);
 	}
 
-	void Buffer::SetData(unsigned int offset, const void* data, unsigned int size)
+	bool Buffer::SetData(size_t offset, const void* data, size_t size)
 	{
+		size_t newStride = offset + size;
+		bool changed = false;
 
-		unsigned int newStride = offset + size;
-		if (m_Stride < newStride)
-			if (m_Size < newStride)
-				Init(data, size * 1.5f);
-			m_Stride = newStride;
 		Bind();
    		glBufferSubData(GetType(), offset, size, data);
 		Unbind();
+
+		return changed;
 		//m_Size+=size;
 	}
 
@@ -115,6 +114,41 @@ namespace lenz
 	}
 
 
+	void VertexArray::Compile(const Buffer& vertexbuffer, const Buffer& instancebuffer, const Buffer& indexbuffer, const VertexBufferLayout& vbl, const InstanceBufferLayout& ibl)
+	{
+		uint32_t offset = 0;
+		uint32_t attributeNo = 0;
+
+		Bind();
+		vertexbuffer.Bind();
+		indexbuffer.Bind();
+
+		for (const BufferElement& vbe : vbl.elements)
+		{
+			glEnableVertexAttribArray(attributeNo);
+			glVertexAttribPointer(attributeNo, vbe.GetCount(), vbe.GetType(), vbe.ShouldNormalize(), vbl.stride, (const void*)offset);
+			offset += vbe.GetStride();
+			attributeNo++;
+		}
+
+		offset = 0;
+		instancebuffer.Bind();
+		for (const BufferElement& ibe : ibl.elements)
+		{
+			glEnableVertexAttribArray(attributeNo);
+			glVertexAttribPointer(attributeNo, ibe.GetCount(), ibe.GetType(), ibe.ShouldNormalize(), ibl.stride, (const void*)offset);
+			glVertexAttribDivisor(attributeNo, 1);
+			offset += ibe.GetStride();
+			attributeNo++;
+		}
+
+		Unbind();
+		vertexbuffer.Unbind();
+		instancebuffer.Unbind();
+		indexbuffer.Unbind();
+	}
+
+
 	void VertexArray::Compile(const Buffer& vertexbuffer, const Buffer& instancebuffer, const Buffer& indexbuffer, const BufferLayout& layout)
 	{
 
@@ -130,7 +164,7 @@ namespace lenz
 		for (const BufferElement& vbe : vertexelements)
 		{
 			glEnableVertexAttribArray(attributeNo);
-			glVertexAttribPointer(attributeNo, vbe.GetCount(), vbe.GetType(), vbe.ShouldNormalize(), layout.GetStride(), (const void*)offset);
+			glVertexAttribPointer(attributeNo, vbe.GetCount(), vbe.GetType(), vbe.ShouldNormalize(), layout.GetVertexStride(), (const void*)offset);
 			offset += vbe.GetStride();
 			attributeNo++;
 		}
@@ -140,7 +174,7 @@ namespace lenz
 		for (const BufferElement& ibe : instanceelements)
 		{
 			glEnableVertexAttribArray(attributeNo);
-			glVertexAttribPointer(attributeNo, ibe.GetCount(), ibe.GetType(), ibe.ShouldNormalize(), layout.GetStride(), (const void*)offset);
+			glVertexAttribPointer(attributeNo, ibe.GetCount(), ibe.GetType(), ibe.ShouldNormalize(), layout.GetInstanceStride(), (const void*)offset);
 			glVertexAttribDivisor(attributeNo, 1);
 			offset += ibe.GetStride();
 			attributeNo++;
@@ -166,7 +200,7 @@ namespace lenz
 		for (const BufferElement& vbe : vertexelements)
 		{
 			glEnableVertexAttribArray(attributeNo);
-			glVertexAttribPointer(attributeNo, vbe.GetCount(), vbe.GetType(), vbe.ShouldNormalize(), layout.GetStride(), (const void*)offset);
+			glVertexAttribPointer(attributeNo, vbe.GetCount(), vbe.GetType(), vbe.ShouldNormalize(), layout.GetVertexStride(), (const void*)offset);
 			offset += vbe.GetStride();
 			attributeNo++;
 		}

@@ -61,4 +61,31 @@ public:
 };
 
 template<typename Class>
-static inline uint32_t GetClassUUID() { return reinterpret_cast<int>(typeid(Class).name()); }
+inline constexpr uint32_t GetClassUUID() { return reinterpret_cast<int>(typeid(Class).name()); }
+
+template<typename... Classes>
+inline constexpr uint32_t GetCombinedClassUUID()
+{
+	uint32_t seed = 0;
+	std::hash<uint32_t> hasher;
+	((seed ^= hasher(GetClassUUID<Classes>()) + 0x9e3779b9 + (seed << 6) + (seed >> 2)), ...);
+
+	return seed;
+}
+//
+//template<typename Class, typename... Classes>
+//inline constexpr uint32_t AddClassUUIDToHash(uint32_t hash)
+//{
+//	// Combine the hash with the ID of the class
+//	hash ^= GetClassUUID<Class>() + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+//
+//	// Recursively combine the hash with the IDs of the remaining classes
+//	if constexpr (sizeof...(Classes) > 0)
+//	{
+//		return AddClassUUIDToHash<Classes...>(hash, ids...);
+//	}
+//	else
+//	{
+//		return hash;
+//	}
+//}

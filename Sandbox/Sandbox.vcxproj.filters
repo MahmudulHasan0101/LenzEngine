@@ -29,5 +29,6 @@
     <None Include="Shaders\texture2d.shader" />
     <None Include="Shaders\texturecube.shader" />
     <None Include="Shaders\skybox.shader" />
+    <None Include="Shaders\coloredcube.shader" />
   </ItemGroup>
 </Project>

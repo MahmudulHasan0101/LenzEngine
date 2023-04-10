@@ -37,7 +37,7 @@ namespace lenz
 		unsigned int width = lenz::App::GetWindow().GetWidth();
 		unsigned int height = lenz::App::GetWindow().GetHeight();
 
-		view = glm::lookAt(Position, Position, Up);
+		view = glm::lookAt(Position, glm::vec3(0, 0, 0), Up);
 		projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, NearPlane, FarPlane);
 
 		Data = projection * view;
@@ -63,7 +63,7 @@ namespace lenz
 		for (size_t s = 0; s < shaders.size(); s++)
 			UniformMat4::UploadTo(std::ref(*shaders.begin()[s]));
 	}
-	void Camera::UpdoadOrientationMatrixTo(std::initializer_list<Shader*> shaders)
+	void Camera::UploadOrientationMatrixTo(std::initializer_list<Shader*> shaders)
 	{
 		MatrixNoPosition();
 
@@ -71,7 +71,7 @@ namespace lenz
 			UniformMat4::UploadTo(std::ref(*shaders.begin()[s]));
 	}
 
-	void Camera::UpdoadPositionMatrixTo(std::initializer_list<Shader*> shaders)
+	void Camera::UploadPositionMatrixTo(std::initializer_list<Shader*> shaders)
 	{
 		MatrixNoOrientation();
 

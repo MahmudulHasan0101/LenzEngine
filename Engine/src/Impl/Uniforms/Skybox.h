@@ -7,6 +7,7 @@
 
 namespace lenz
 {
+	/*
 	class Skybox
 	{
 	public:
@@ -42,6 +43,8 @@ namespace lenz
 		Cubemap cubemap;
 		VertexArray arraybuffer;
 	};
+
+	*/
 }
 
 

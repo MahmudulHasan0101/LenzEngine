@@ -5,7 +5,7 @@
 #define LZ_COMPONENT_DATA_TYPE(type) inline static unsigned int GetFrameworkType() { return lenz::GetOpenGLType<type>(); }\
 									 inline static unsigned int GetTypeSize() { return sizeof (type); }
 
-namespace RenderComponent
+namespace Component
 {
 	// Components:
 	struct Position
@@ -69,4 +69,76 @@ namespace RenderComponent
 
 		LZ_COMPONENT_DATA_TYPE(float)
 	};
+
+	class Transformation {
+	public:
+
+		Transformation() {
+			matrix = glm::mat4(1.0f);
+		}
+
+		Transformation(const Transformation& other) {
+			matrix = other.matrix;
+		}
+
+		Transformation(Transformation&& other) noexcept {
+			matrix = std::move(other.matrix);
+		}
+
+		void Scale(float x, float y, float z) {
+			matrix = glm::scale(matrix, glm::vec3(x, y, z));
+		}
+
+		void ScaleRatio(float ratio) {
+			Scale(ratio, ratio, ratio);
+		}
+
+		void RotateX(float angle) {
+			matrix = glm::rotate(matrix, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+
+		void RotateY(float angle) {
+			matrix = glm::rotate(matrix, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+
+		void RotateZ(float angle) {
+			matrix = glm::rotate(matrix, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+		}
+
+		void ScaleX(float x) {
+			matrix = glm::scale(matrix, glm::vec3(x, 1.0f, 1.0f));
+		}
+
+		void ScaleY(float y) {
+			matrix = glm::scale(matrix, glm::vec3(1.0f, y, 1.0f));
+		}
+
+		void ScaleZ(float z) {
+			matrix = glm::scale(matrix, glm::vec3(1.0f, 1.0f, z));
+		}
+
+		void MoveX(float x) {
+			matrix = glm::translate(matrix, glm::vec3(x, 0.0f, 0.0f));
+		}
+
+		void MoveY(float y) {
+			matrix = glm::translate(matrix, glm::vec3(0.0f, y, 0.0f));
+		}
+
+		void MoveZ(float z) {
+			matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, z));
+		}
+
+		void Reset()
+		{
+			matrix = glm::mat4(1.0f);
+		}
+
+		glm::mat4 matrix;
+
+		LZ_COMPONENT_DATA_TYPE(glm::mat4)
+	};
+
+
+
 }

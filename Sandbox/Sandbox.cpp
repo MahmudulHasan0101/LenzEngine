@@ -4,6 +4,7 @@
 #include<Impl/Uniforms/Camera.h>
 #include<Impl/Components/RendererComponents.h>
 
+#include<random>
 
 
 class FPSUpdater
@@ -33,26 +34,21 @@ public:
 };
 
 
-
-
-class Sky : public lenz::Entity
-{
-public:
-	Sky(lenz::Scene* scene)
-	{
-		Init<Shape3D::TexturedCubeShape>(scene);
-	}
-};
-
-
-
 class ExampleLayer : public lenz::Layer
 {
 public:
 	ExampleLayer(std::string name = "layer")
+		//:colored_cubes(Cube()), colored_squares(Square()), sky(TexturedCubeShape())
+		: colored_cubes(scene.CreateDrawcall<Cube, Component::Position, Component::Color>()),
+		colored_squares(scene.CreateDrawcall<Square, Component::Position, Component::Color>())
 	{
+		//colored_cubes.AddAttributes< Component::Position, Component::Color>();
+		//colored_squares.AddAttributes< Component::Position, Component::Color>();
+
 		// Setting the sky:
 		sky_shader.Init("Shaders/skybox.shader");
+		coloredcube_shader.Init("Shaders/coloredcube.shader");
+
 		texture = lenz::Cubemap({
 			"Images/skybox/right.jpg",
 			"Images/skybox/left.jpg",
@@ -62,14 +58,33 @@ public:
 			"Images/skybox/back.jpg"
 			}, 6);
 		texture.UploadToShader(sky_shader, "u_texture");
+				
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dis_position(-15.0, 15.0);
+		std::uniform_real_distribution<float> dis_color(0.5, 1);
 
+		for (size_t s = 0; s < 15; s++)
+		{
+			auto& entity = colored_cubes.CreateEntity();
+			entity.GetComponent<Component::Position>().position = { dis_position(gen), dis_position(gen), dis_position(gen) };
+			entity.GetComponent<Component::Color>().color = { dis_color(gen), dis_color(gen), dis_color(gen), 0.75f};
+		}
 
-		scene.CreateDrawCall<Shape3D::TexturedCubeShape>().Compile();
-		auto sky = Sky(&scene);
+		for (size_t s = 0; s < 15; s++)
+		{
+			auto& entity = colored_squares.CreateEntity();
+			entity.GetComponent<Component::Position>().position = { dis_position(gen), dis_position(gen), dis_position(gen) };
+			entity.GetComponent<Component::Color>().color = { dis_color(gen), dis_color(gen), dis_color(gen), 0.75f };
+		}
 
 		camera.Init("u_camera");
 		camera.SetSpeed(5.0f);
 
+		colored_cubes.Update<Component::Position, Component::Color>();
+		colored_squares.Update<Component::Position, Component::Color>();
+
+		glEnable(GL_BLEND);
 		lenz::RendererCommands::EnableDepthTest();
 	}
 
@@ -77,25 +92,60 @@ public:
 	bool OnEvent(lenz::Event& e) override
 	{
 		camera.OnEvent(e);
+		lenz::Layer::OnEvent(e);
 
 		return false;
 	}
+
+	bool OnKeyPressed(lenz::KeyPressedEvent& e)
+	{
+		switch (e.GetKeyCode())
+		{
+		case (GLFW_KEY_Q):
+		{
+			colored_cubes.drawcall->PrintAttributes<float>();
+			break;
+		}
+
+		case (GLFW_KEY_P):
+		{
+			colored_squares.drawcall->PrintAttributes<float>();
+			break;
+		}
+		}
+		return false;
+	}
+
 	void OnUpdate(lenz::TimeStep& ts) override
 	{
-		lenz::RendererCommands::Clear();
 		camera.OnUpdate(ts);
-		camera.UpdoadOrientationMatrixTo({ &sky_shader });
 
-		lenz::RendererCommands::DepthTestType(lenz::DepthTestTypes::LEQUAL);
-		scene.Draw(sky_shader);
-		lenz::RendererCommands::DepthTestType(lenz::DepthTestTypes::LESS);
+		camera.UploadOrientationMatrixTo({ &sky_shader });
+		camera.UploadTo({ &coloredcube_shader });
+		
+		lenz::RendererCommands::Clear();
+
+		colored_squares.drawcall->Run(coloredcube_shader);
+		colored_cubes.drawcall->Run(coloredcube_shader);
 	}
 
 private:
 	lenz::Camera camera;
-	lenz::Scene scene;
 	lenz::Shader sky_shader;
+	lenz::Shader coloredcube_shader;
 	lenz::Cubemap texture;
+
+	lenz::Scene scene;
+
+	lenz::SceneDrawcall<Cube, Component::Position, Component::Color> colored_cubes;
+	lenz::SceneDrawcall<Square, Component::Position, Component::Color> colored_squares;
+
+	//lenz::DrawCall colored_cubes;
+	//lenz::DrawCall colored_squares;
+	//lenz::DrawCall sky;
+	//lenz::DrawCall<Cube, Component::Position, Component::Color> colored_cubes;
+	//lenz::DrawCall<Square, Component::Position, Component::Color> colored_squares;
+	//lenz::DrawCall<TexturedCubeShape> sky;
 
 };
 
@@ -126,3 +176,21 @@ lenz::App* CreateApp()
 	return new Simulator();
 }
 #endif
+
+
+//
+//
+//#include<iostream>
+//#include<typeinfo>
+//
+//template<typename T>
+//void print()
+//{
+//	std::cout << typeid(T).name() << "\n";
+//}
+//
+//int main()
+//{
+//	std::type_info const& type = typeid(float);
+//	print<decltype(type)>();
+//}

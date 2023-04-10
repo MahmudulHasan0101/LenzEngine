@@ -11,7 +11,7 @@ void main()
 {
     v_texcoord = vertex.xyz;
     vec4 pos = u_camera * vertex;
-    gl_Position = vec4(pos.x, pos.y, pos.w, pos.w);
+    gl_Position = vec4(pos.x, pos.y, 0.999, pos.w);
 }
 
 
