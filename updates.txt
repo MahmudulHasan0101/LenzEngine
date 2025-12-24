@@ -1,0 +1,11 @@
+Latest Changes:
+1) no longer using entt
+2) uses persistent, coherent ssbo for instance storage
+3) removed alots of cpu overhead
+
+Upcoming:
+1) having a indirect command for every entity is bit inefficient, so making a system of stack of entity will be good
+2) decrease the unordered_map overhead
+3) custom memory view of the instance ssbo for the drawunites according to their need
+4) merging multiple drawcalls of single instance drawunites using indirect commands 
+5) updating camera to use uniform storage, making a general uniform class

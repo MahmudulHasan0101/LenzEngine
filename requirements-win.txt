@@ -1,0 +1,12 @@
+piper-tts>=1.3.0
+onnxruntime>=1.16,<2
+
+sounddevice
+numpy
+vosk
+torch
+sentence-transformers
+fuzzywuzzy
+python-Levenshtein
+PyQt5
+PyQtWebEngine

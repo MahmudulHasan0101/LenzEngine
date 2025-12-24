@@ -1,0 +1,16 @@
+{
+  "name": "lenz-engine",
+  "version": "0.1.0",
+  "dependencies": [
+    "assimp",
+    "bullet3",
+    "glfw3",
+    "glew",
+    "v-hacd",
+    "freetype",
+    "glm",
+	"plog",
+    "stb",               
+    "nlohmann-json"    
+  ]
+}
